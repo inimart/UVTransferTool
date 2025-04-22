@@ -1,96 +1,61 @@
-# UV Transfer Tool
+# UV Transfer Tool for Unity
 
-A Unity editor tool for transferring and manipulating UV coordinates between meshes, making texture mapping workflows faster and easier.
+A lightweight EditorWindow that lets you copy UV coordinates from one mesh to another **as long as both meshes share the exact same vertex count / topology**.
+
+This repository contains a single C# script (`UVTransferTool.cs`) that lives in an **Editor** folder and therefore runs _only_ inside the Unity Editor – never at runtime / in builds.
+
+---
 
 ## Features
 
-- Transfer UVs from one mesh to another with similar topology
-- Project UVs from a source mesh onto a target mesh using position, normal, or ray-based mapping
-- Automatically detect and handle seams and overlapping areas
-- Preserve UV islands when transferring between different mesh resolutions
-- Support for multiple UV channels and UDIM workflows
-- Batch processing for multiple meshes
-- Undo/redo compatibility
-- Real-time preview of UV transfer results
+* Transfer UVs from **any** of the four UV channels (0–3)
+* Visual preview of source and target UV layouts
+* Works with meshes referenced by **MeshFilter** _or_ **SkinnedMeshRenderer**
+* Creates a new mesh asset and assigns it to the target object, preserving the original asset untouched
+
+---
 
 ## Installation
 
-### Via Unity Package Manager
+1. Copy `UVTransferTool.cs` into an `Editor` folder inside your project (`Assets/Editor`, `Assets/Tools/Editor`, … – any folder named *Editor* works).
+2. Unity will recompile scripts and the tool will appear under the top‑level menu:
 
-1. Open your Unity project
-2. Go to Window > Package Manager
-3. Click the "+" button and select "Add package from disk..."
-4. Navigate to the UVTransferTool folder and select the `package.json` file
-5. Click "Add"
-
-### Manual Installation
-
-1. Copy the entire UVTransferTool folder into your Unity project's "Packages" directory
-2. Restart Unity or refresh the package list
-
-## Quick Start
-
-1. Open the UV Transfer Tool window: 
-   - Go to Window > UV Tools > UV Transfer Tool
-
-2. Basic UV Transfer:
-   - Select your target mesh (the mesh to receive new UVs)
-   - Assign the source mesh (the mesh with the UVs you want to transfer)
-   - Choose the mapping method
-   - Click "Transfer UVs"
-
-## Usage Examples
-
-### Simple UV Transfer
-
-```csharp
-// You can also access the tool via scripting:
-using Inimart.UVTransferTool;
-
-// Get meshes
-Mesh sourceMesh = sourceObject.GetComponent<MeshFilter>().sharedMesh;
-Mesh targetMesh = targetObject.GetComponent<MeshFilter>().sharedMesh;
-
-// Transfer UVs from channel 0
-UVTransfer.TransferUVs(sourceMesh, targetMesh, UVTransferMethod.NearestPoint, 0);
-
-// Apply the modified mesh
-targetObject.GetComponent<MeshFilter>().sharedMesh = targetMesh;
+```
+Tools ▸ UV Transfer Tool
 ```
 
-### Advanced UV Projection
+---
 
-For complex meshes where direct transfer doesn't work well, try using the projection method:
+## Usage
 
-1. Position your source and target meshes in the same space
-2. In the UV Transfer Tool window:
-   - Select "Projection" as the mapping method
-   - Adjust the projection parameters
-   - Enable "Show Preview" to see the results before applying
-   - Click "Transfer UVs" when satisfied
+1. Open the window via **Tools ▸ UV Transfer Tool**.
+2. Drag a GameObject that contains the *source* mesh into the **Source** field.
+3. Drag a GameObject that contains the *target* mesh into the **Target** field.
+4. Enter the **UV Channel** you want to copy.
+5. (Optional) Toggle **UV Preview** to display live previews.
+6. Press **Transfer UVs**.
+7. A _Save File_ dialog appears – choose where the new mesh asset should be written. The tool appends `"_FixedUV"` to the original target mesh name by default.
+8. After saving, the new mesh is automatically assigned to the target object so you can inspect the result instantly.
 
-## Advanced Options
-
-- **Smoothing**: Apply smoothing to the transferred UVs to reduce distortion
-- **Island Preservation**: Keep UV islands intact during transfer
-- **Custom Mapping**: Define your own vertex correspondences for precise control
-- **Batch Processing**: Process multiple meshes with the same settings
+---
 
 ## Requirements
 
-- Unity 2021.3 or newer
-- Recommended: Unity with ProBuilder for editing mesh assets
+* Unity **2023.2** or newer
+* `Read/Write Enabled` must be checked on both meshes (import settings)
+* Source and target meshes **must have the same vertex count**
 
-## Troubleshooting
+---
 
-- **Distorted UVs**: Try adjusting the mapping method or increasing the sampling density
-- **Missing UV Areas**: Check for disconnected vertices or non-manifold geometry in your meshes
-- **Performance Issues**: For very large meshes, try using the "Approximate" mode
+## Limitations
 
-## Contributing
+* Does **not** perform any UV transformation (scale / offset / rotation) – it is a 1‑to‑1 copy
+* Only one UV channel can be transferred per operation
+* Editor‑only – cannot be used at runtime in a build
+* Preview resolution is fixed to 512 px and may miss fine details on very dense meshes
 
-To contribute to the project, contact the authors or open an issue on GitHub.
+---
 
-## License
+## Documentation
 
-This package is distributed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
+A step‑by‑step tutorial and troubleshooting tips can be found in **`Documentation~/UVTransferTool-Guide.md`**.

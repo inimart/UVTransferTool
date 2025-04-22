@@ -1,240 +1,99 @@
-# UV Transfer Tool - Complete Guide
+# UV Transfer Tool – Detailed User Guide
 
-## Overview
 
-The UV Transfer Tool is designed to solve one of the most common challenges in 3D content creation: transferring and manipulating UV coordinates between different meshes. Whether you're working with character models, environments, or props, this tool streamlines your texture mapping workflow.
+## 1. Introduction
 
-This guide will walk you through all features of the UV Transfer Tool and provide tips for getting the best results.
+The **UV Transfer Tool** is a Unity Editor extension that copies UV coordinates from one mesh to another _provided both meshes share identical vertex counts_.  
+It is especially useful when you create multiple LODs or mesh variants that should reuse a common texture layout.
 
-## Table of Contents
+The tool lives entirely in the editor and does **not** run in player builds.
 
-- [Installation](#installation)
-- [Basic Concepts](#basic-concepts)
-- [The UV Transfer Window](#the-uv-transfer-window)
-- [Transfer Methods](#transfer-methods)
-- [Advanced Options](#advanced-options)
-- [Batch Processing](#batch-processing)
-- [Scripting API](#scripting-api)
-- [Troubleshooting](#troubleshooting)
-- [Tips and Best Practices](#tips-and-best-practices)
+---
 
-## Installation
+## 2. Opening the Window
 
-1. Open your Unity project
-2. Go to Window > Package Manager
-3. Click the "+" button and select "Add package from disk..."
-4. Navigate to the UVTransferTool folder and select the `package.json` file
-5. Click "Add"
+`Tools ▸ UV Transfer Tool`
 
-After installation, you can access the tool via Window > UV Tools > UV Transfer Tool.
+![Menu screenshot](UVTransferTool.png)
 
-## Basic Concepts
+> If the menu item is missing make sure `UVTransferTool.cs` resides in a folder named **Editor** so Unity treats it as an editor‑only script.
 
-Before diving into the tool, it's important to understand some basic concepts:
+---
 
-- **Source Mesh**: The mesh with the UVs you want to transfer from
-- **Target Mesh**: The mesh that will receive the new UVs
-- **UV Channel**: Unity supports multiple UV sets per mesh (usually channel 0 is the main one)
-- **Mapping Method**: The algorithm used to determine how UVs are transferred
-- **UV Islands**: Connected groups of UV coordinates that represent distinct parts of the mesh
+## 3. Window Overview
 
-## The UV Transfer Window
+| UI Element        | Description                                                                                                             |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------|
+| **Source**        | GameObject that owns the mesh _with_ the UVs you want to copy. Can be a **MeshFilter** or **SkinnedMeshRenderer**.      |
+| **Target**        | GameObject that owns the mesh that should _receive_ the UVs.                                                            |
+| **UV Channel**    | Integer (0‑3). Channel 0 is the primary texture UV, 1 is usually used for lightmaps, 2‑3 are free for custom data.      |
+| **UV Preview**    | Toggle preview rendering on/off. Previews are rendered at 512 × 512 resolution in real time.                            |
+| **Transfer UVs**  | Executes the copy process. Opens a Save‑File dialogue for the resulting mesh asset.                                     |
 
-![UV Transfer Window](UVTransferTool-Window.png)
+Below the controls two preview areas visualize the source and target UV layouts when the **UV Preview** toggle is enabled.
 
-The main window consists of several sections:
+---
 
-1. **Mesh Selection**
-   - Source Mesh: Assign the mesh with the UVs you want to copy
-   - Target Mesh: Assign the mesh that will receive the UVs
+## 4. Step‑by‑Step Instructions
 
-2. **UV Settings**
-   - Source UV Channel: Select which UV channel to copy from (0-7)
-   - Target UV Channel: Select which UV channel to write to (0-7)
-   - Generate New UVs: Toggle to create a completely new UV set instead of copying
+1. **Select Source Mesh** – drag & drop a GameObject that has a MeshFilter or SkinnedMeshRenderer component into the **Source** slot.
+2. **Select Target Mesh** – do the same for the **Target** slot.
+3. **Pick UV Channel** – enter 0‑3 to choose which channel to copy. The same index on the target mesh will be overwritten.
+4. **(Optional) Inspect Previews** – enable **UV Preview** to double‑check the layouts.
+5. **Transfer UVs** – click the button. You are asked where to save the new mesh asset (default name `<TargetMesh>_FixedUV.asset`).
+6. **Done** – the tool assigns the new mesh to the target object, leaving the original mesh unmodified.
 
-3. **Transfer Settings**
-   - Mapping Method: Choose how UVs are transferred (see next section)
-   - Sampling Density: Controls the precision of the transfer
-   - Smoothing: Apply smoothing to the result
+---
 
-4. **Preview Options**
-   - Show Preview: Toggle real-time preview
-   - Preview Channel: Which channel to preview
-   - Opacity: Control the preview overlay opacity
+## 5. How the Process Works Internally
 
-5. **Actions**
-   - Transfer UVs: Execute the UV transfer
-   - Revert: Restore original UVs
-   - Save Mesh: Save the result as a new mesh asset
+1. Both source and target meshes are duplicated in memory so the originals stay untouched.
+2. Vertex counts are compared – the transfer is aborted if they differ.
+3. The specified UV array (`uv`, `uv2`, `uv3`, or `uv4`) from the **source** copy is assigned to the **target** copy.
+4. The user chooses an asset path; the target copy is saved as a new `.asset` file.
+5. The new mesh is assigned to the target renderer.
 
-## Transfer Methods
+---
 
-The tool offers multiple mapping methods, each suited for different scenarios:
+## 6. UV Preview Explained
 
-### Nearest Point
+* White lines – edges of UV triangles
+* Red dots       – vertex positions (drawn slightly larger for visibility)
+* Grey grid      – background 0‑1 UV space
 
-Transfers UVs based on the closest point on the source mesh. This is the fastest method and works well when:
-- Meshes have similar shapes
-- Meshes are aligned in the same space
-- Vertex counts are similar
+> The preview is _approximate_. Highly dense meshes may show aliasing due to the fixed 512 px resolution.
 
-```
-Settings to adjust:
-- Max Distance: Maximum distance to search for corresponding points
-- Use Spatial Hash: Accelerate search using spatial hashing (recommended for large meshes)
-```
+---
 
-### Topology-Based
 
-Uses topological information to transfer UVs. Best when:
-- Meshes have identical topology but different shapes
-- Preserving UV seams and islands is critical
+## 7. Troubleshooting
 
-```
-Settings to adjust:
-- Topology Threshold: How strictly to follow topology
-- Edge Flow Preservation: Maintain edge flow direction
-```
+| Symptom                                                                                       | Likely Cause & Fix                                                                                      |
+|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| **Error:** "Meshes must have the same vertex count"                                            | Source and target do not share topology. They must originate from the same modelling base.              |
+| **Warning:** "Source mesh doesn't have UV channel X"                                           | The chosen channel on the source mesh is empty. Pick another channel or create UVs in your DCC app.     |
+| The **Transfer UVs** button is disabled                                                        | One or both object fields are empty. Assign valid GameObjects.                                          |
+| UV previews appear blank                                                                       | The selected channel contains no UVs; disable preview or switch channels.                              |
+| Menu entry missing                                                                             | Script not inside an `Editor` folder. Move `UVTransferTool.cs` there.                                   |
 
-### Projection-Based
+---
 
-Projects UVs from source to target using ray casting. Ideal when:
-- Meshes have very different topologies
-- Working with high-to-low poly transfers
-- Creating UVs for displacement maps
+## 8. Known Limitations
 
-```
-Settings to adjust:
-- Projection Direction: Custom or automatic direction
-- Ray Distance: Maximum distance for ray projection
-- Normal Bias: Offset along normals to prevent self-intersection
-```
+* Requires **identical vertex count** – does not attempt remapping or matching by position.
+* Transfers **one** UV channel at a time; repeated runs are needed for multiple channels.
+* Preview resolution is fixed; complex UVs may appear cramped.
+* Editor‑only – cannot be executed at runtime.
 
-### Parametric Mapping
+---
 
-Creates a parametric mapping between meshes. Works best for:
-- Organic shapes with different topologies
-- Character meshes at different poses
-- Objects with continuous surfaces
+## 9. FAQ
 
-```
-Settings to adjust:
-- Feature Points: Number of feature points to use
-- Relaxation Iterations: Higher values give smoother results
-```
+**Q:** _Can I transfer UVs between meshes with different vertex counts if they look the same?_  
+**A:** No. The tool purely copies array data; mismatching indices would corrupt the layout.
 
-## Advanced Options
+**Q:** _Does it support ProBuilder meshes?_  
+**A:** Any mesh that ends up as a `Mesh` asset with read‑write enabled works, including ProBuilder‑generated meshes.
 
-### UV Island Preservation
-
-The tool can automatically detect and preserve UV islands:
-
-1. Enable "Preserve UV Islands" in the Advanced Options
-2. Adjust the "Island Detection Threshold" to control how islands are identified
-3. Use "Island Visualization" to see the detected islands before transfer
-
-### Seam Handling
-
-Control how UV seams are managed during transfer:
-
-1. Enable "Detect Seams" to identify UV seams in the source mesh
-2. Choose a seam handling method:
-   - Preserve: Maintain source seams
-   - Optimize: Create new optimized seams
-   - Ignore: Disregard seams (may cause stretching)
-
-### Custom Weight Maps
-
-For precise control over the transfer process:
-
-1. Enable "Use Weight Map"
-2. Assign a grayscale texture as the weight map
-3. Areas with higher weight (whiter) will follow the source UVs more closely
-
-## Batch Processing
-
-To process multiple meshes at once:
-
-1. Click "Batch Processing" in the main window
-2. Add target meshes to the list
-3. Configure batch settings (same as single transfer)
-4. Click "Process Batch" to apply settings to all meshes
-
-## Scripting API
-
-The tool can be accessed through code for pipeline integration:
-
-```csharp
-using Inimart.UVTransferTool;
-
-// Basic transfer
-UVTransfer.TransferUVs(sourceMesh, targetMesh, UVTransferMethod.NearestPoint, 0);
-
-// Advanced transfer with options
-UVTransferOptions options = new UVTransferOptions
-{
-    SourceUVChannel = 0,
-    TargetUVChannel = 0,
-    MappingMethod = UVTransferMethod.Projection,
-    SamplingDensity = 0.8f,
-    ApplySmoothing = true,
-    SmoothingIterations = 2,
-    PreserveSeams = true
-};
-
-UVTransfer.TransferUVs(sourceMesh, targetMesh, options);
-
-// Get preview data without applying
-UVPreviewData previewData = UVTransfer.GeneratePreview(sourceMesh, targetMesh, options);
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Distorted UVs**
-   - Try a different mapping method
-   - Increase the sampling density
-   - Check that meshes are properly aligned
-   - Ensure normals are properly oriented
-
-2. **Missing UV Areas**
-   - Check for disconnected vertices
-   - Increase the search/ray distance
-   - Verify the mesh has proper topology
-
-3. **Poor Performance**
-   - Use the "Approximate" option for large meshes
-   - Reduce the sampling density
-   - Enable "Use Spatial Hash" option
-
-### Error Messages
-
-- **"Source mesh not readable"**: Set the mesh to be readable in import settings
-- **"Invalid UV channel"**: Unity supports channels 0-7, check your selection
-- **"Mesh has no UVs"**: Ensure the source mesh has UVs in the selected channel
-
-## Tips and Best Practices
-
-1. **Preparing Your Meshes**
-   - Ensure meshes have clean topology before transfer
-   - For best results, align source and target in a similar pose/position
-   - Use meshes with comparable vertex density for direct transfers
-
-2. **Choosing the Right Method**
-   - Nearest Point: For similar meshes or quick tests
-   - Topology-Based: For preserving exact UV layout
-   - Projection: For different topology meshes
-   - Parametric: For organic or character meshes
-
-3. **Optimizing Results**
-   - Start with default settings and refine as needed
-   - Use the preview to check results before applying
-   - For character models, transfer UVs in a T-pose or reference pose
-   - Save intermediate results when working with complex transfers
-
-4. **Pipeline Integration**
-   - Use the scripting API for batch processing in larger projects
-   - Create presets for commonly used transfer settings
-   - Consider using version control for mesh assets before major UV changes 
+**Q:** _Will materials be updated automatically?_  
+**A:** Materials remain untouched – only the mesh asset is swapped.

@@ -1,6 +1,6 @@
 {
   "name": "com.inimart.uvtransfertool",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "displayName": "UV Transfer Tool",
   "description": "A Unity editor tool for transferring and manipulating UV coordinates between meshes. Simplifies texture mapping workflows for 3D models with complex UV layouts.",
   "unity": "2021.3",
