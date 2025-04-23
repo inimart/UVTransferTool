@@ -2,7 +2,9 @@
 
 A lightweight EditorWindow that lets you copy UV coordinates from one mesh to another **as long as both meshes share the exact same vertex count / topology**.
 
-This repository contains a single C# script (`UVTransferTool.cs`) that lives in an **Editor** folder and therefore runs _only_ inside the Unity Editor – never at runtime / in builds.
+---
+
+## ![loading-ag-664](./Documentation~/UVTransferTool.png)
 
 ---
 
@@ -17,12 +19,15 @@ This repository contains a single C# script (`UVTransferTool.cs`) that lives in 
 
 ## Installation
 
-1. Copy `UVTransferTool.cs` into an `Editor` folder inside your project (`Assets/Editor`, `Assets/Tools/Editor`, … – any folder named *Editor* works).
-2. Unity will recompile scripts and the tool will appear under the top‑level menu:
+### Using Unity Package Manager
 
-```
-Tools ▸ UV Transfer Tool
-```
+* Open Unity and your project
+
+* Go to Window > Package Manager
+
+* Click the "+" button and select "Install package from git URL..."
+
+* [https://github.com/inimart/UVTransferTool.git]
 
 ---
 
